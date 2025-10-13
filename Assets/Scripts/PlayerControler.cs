@@ -61,6 +61,25 @@ public class PlayerControler : MonoBehaviour
         {
             Jump();
         }
+
+        if(_aimAction.WasPerformedThisFrame())
+        {
+            Attack();
+        }
+    }
+
+    void Attack()
+    {
+         Ray ray = Camera.main.ScreenPointToRay(_lookImput);
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit, Mathf.Infinity))
+        {
+            Enemy enemyScript = hit.transform.GetComponent<Enemy>();
+            if(enemyScript != null)
+            {
+                //enemyScript.TakeDamage();
+            }
+        }
     }
 
     void AimMovement()
