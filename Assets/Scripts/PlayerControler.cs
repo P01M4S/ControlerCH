@@ -7,10 +7,11 @@ using UnityEngine.TextCore;
 
 public class PlayerControler : MonoBehaviour
 {
+    public Animator _animator;
     public CharacterController _controller;
     public InputAction _moveAction;
     public Vector2 _moveInput;
-    public float _movementSpeed = 3;
+    public float _movementSpeed = 5;
     public float _gravity = -9;
     [SerializeField] private Vector3 _playerGravity;
     public Transform _sensor;
@@ -33,6 +34,7 @@ public class PlayerControler : MonoBehaviour
         _lookAction = InputSystem.actions["Look"];
         _mainCamara = Camera.main.transform;
         _aimAction = InputSystem.actions["Aim"];
+        _animator = GetComponentInChildren<Animator>();
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -46,8 +48,9 @@ public class PlayerControler : MonoBehaviour
         _moveInput = _moveAction.ReadValue<Vector2>();
         _lookImput = _lookAction.ReadValue<Vector2>();
         //MovimientoCutre();
-        Movement();
-        AimMovement();
+        //Movement();
+        //AimMovement();
+
         if (_aimAction.IsInProgress())
         {
             AimMovement();
@@ -56,6 +59,7 @@ public class PlayerControler : MonoBehaviour
         {
             Movement();
         }
+
         Gravity();
         if (_jumpAction.WasPressedThisFrame() && IsGrounded())
         {
@@ -85,6 +89,9 @@ public class PlayerControler : MonoBehaviour
     void AimMovement()
     {
         Vector3 direction = new Vector3(_moveInput.x, 0, _moveInput.y);
+
+        _animator.SetFloat("horizontal", _moveInput.x);
+        _animator.SetFloat("vertical", _moveInput.y);
         
         float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + _mainCamara.eulerAngles.y;
         float smoothAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, _mainCamara.eulerAngles.y, ref _turnSmooth, _smoothTime);
@@ -102,6 +109,9 @@ public class PlayerControler : MonoBehaviour
     void Movement()
     {
         Vector3 direction = new Vector3(_moveInput.x, 0, _moveInput.y);
+
+        _animator.SetFloat("vertical", direction.magnitude);
+        _animator.SetFloat("horizontal", 0);
 
         if (direction != Vector3.zero)
         {
@@ -153,15 +163,17 @@ public class PlayerControler : MonoBehaviour
         {
             _playerGravity.y += _gravity * Time.deltaTime;
         }
-        else if (IsGrounded() && _playerGravity.y < _gravity)
+        else if (IsGrounded() && _playerGravity.y < 0)
         {
             _playerGravity.y = _gravity;
+            _animator.SetBool("IsJumping", false);
         }
         _controller.Move(_playerGravity * Time.deltaTime);
     }
 
     void Jump()
     {
+        _animator.SetBool("IsJumping", true);
         _playerGravity.y = Mathf.Sqrt(_jumpHeigth * -2 * _gravity);
         _controller.Move(_playerGravity * Time.deltaTime);
     }
