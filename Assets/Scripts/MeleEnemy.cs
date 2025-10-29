@@ -28,7 +28,7 @@ public class MeleEnemy : Enemy, IDamageEnable
     {
         throw new System.NotImplementedException();
     }
-    void IDamageEnable.TakeDamage()
+    void IDamageEnable.TakeDamage(float damage)
     {
         Debug.Log("Auch");
     }

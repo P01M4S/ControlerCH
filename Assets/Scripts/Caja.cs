@@ -1,26 +1,23 @@
 using UnityEngine;
 
-public class Caja : MonoBehaviour, IDamageEnable, IInteractuable
+public class Caja : MonoBehaviour, IDamageEnable, IInteractuable, IGrabable
 {
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
-    void IDamageEnable.TakeDamage()
-    {
-        Debug.Log("Auch");
-    }
-
+    public float _health;
+    
     void IInteractuable.Interact()
     {
         Debug.Log("Yepa");
+    }
+    public void Grab()
+    {
+        Debug.Log("Epa");
+    }
+    public void TakeDamage(float damage)
+    {
+        _health -= damage;
+        if(_health <= 0)
+        {
+            Destroy(gameObject);
+        }
     }
 }
