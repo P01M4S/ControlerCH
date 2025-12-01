@@ -41,16 +41,22 @@ public class FPSController : MonoBehaviour
     {
         _moveInput = _moveAction.ReadValue<Vector2>();
         _lookImput = _lookAction.ReadValue<Vector2>();
+        Gravity();
 
         Movement();
 
-        Gravity();
         if (_jumpAction.WasPressedThisFrame() && IsGrounded())
         {
             Jump();
         }
     }
     
+    float _speedChangeRate = 10;
+    float _speed;
+    float _animationSpeed;
+    bool isSprinting = false;
+    float _sprintSpeed;
+    float targetAngle;
      void Movement()
     {
         Vector3 direction = new Vector3(_moveInput.x, 0, _moveInput.y);
@@ -61,8 +67,42 @@ public class FPSController : MonoBehaviour
         _xRotation -= mouseY;
         _xRotation = Mathf.Clamp(_xRotation, -90, 90);
 
-        _animator.SetFloat("horizontal", _moveInput.x);
-        _animator.SetFloat("vertical", _moveInput.y);
+
+        //_animator.SetFloat("horizontal", _moveInput.x);
+        //_animator.SetFloat("vertical", _moveInput.y);
+        float targetSpeed;
+        if(isSprinting)
+        {
+            targetSpeed = _sprintSpeed;
+        }
+        else
+        {
+            targetSpeed = _movementSpeed;
+        }
+
+        if(direction == Vector3.zero)
+        {
+            targetSpeed = 0;
+        }
+        float currentSpeed = new Vector3(_controller.velocity.x, 0, _controller.velocity.z).magnitude;
+        float speedOffset = 0.1f;
+        if(currentSpeed < targetSpeed - speedOffset || currentSpeed > targetSpeed + speedOffset)
+        {
+            _speed = Mathf.Lerp(currentSpeed, targetSpeed, Time.deltaTime * _speedChangeRate);
+            _speed = Mathf.Round(_speed * 1000f) / 1000f;
+        }
+        else
+        {
+            _speed = targetSpeed;
+        }
+
+        _animationSpeed = Mathf.Lerp(_animationSpeed, targetSpeed, Time.deltaTime * _speedChangeRate);
+        if(_animationSpeed < 0.1f)
+        {
+            _animationSpeed = 0;
+        }
+        _animator.SetFloat("Speed", _animationSpeed);
+
 
         transform.Rotate(Vector3.up, mouseX);
         _lookAtSky.localRotation = Quaternion.Euler(_xRotation, 0, 0);
@@ -70,15 +110,15 @@ public class FPSController : MonoBehaviour
 
         if(direction != Vector3.zero)
         {
-            float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + _mainCamara.eulerAngles.y;
-            Vector3 moveDirection = Quaternion.Euler(0, targetAngle, 0) * Vector3.forward;
-            _controller.Move(moveDirection * _movementSpeed * Time.deltaTime);
+            targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + _mainCamara.eulerAngles.y;
         }
+        Vector3 moveDirection = Quaternion.Euler(0, targetAngle, 0) * Vector3.forward;
+        _controller.Move(_speed * Time.deltaTime * moveDirection.normalized + _playerGravity * Time.deltaTime);
     }
     
      void Gravity()
     {
-        if (!IsGrounded())
+        /*if (!IsGrounded())
         {
             _playerGravity.y += _gravity * Time.deltaTime;
         }
@@ -86,15 +126,30 @@ public class FPSController : MonoBehaviour
         {
             _playerGravity.y = _gravity;
             _animator.SetBool("IsJumping", false);
+        }*/
+        //_controller.Move(_playerGravity * Time.deltaTime);
+        _animator.SetBool("Land", IsGrounded());
+        if(IsGrounded())
+        {
+            _animator.SetBool("Jump", false);
+            _animator.SetBool("Fall", false);
+            if(_playerGravity.y < 0)
+            {
+                _playerGravity.y = -2;
+            }
         }
-        _controller.Move(_playerGravity * Time.deltaTime);
+        else
+            {
+                _animator.SetBool("Fall", true);
+                _playerGravity.y += _gravity * Time.deltaTime;
+            }
     }
 
     void Jump()
     {
-        _animator.SetBool("IsJumping", true);
+        _animator.SetBool("Jump", true);
         _playerGravity.y = Mathf.Sqrt(_jumpHeigth * -2 * _gravity);
-        _controller.Move(_playerGravity * Time.deltaTime);
+        //_controller.Move(_playerGravity * Time.deltaTime);
     }
 
     bool IsGrounded()
