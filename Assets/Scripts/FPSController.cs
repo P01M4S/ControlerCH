@@ -36,6 +36,11 @@ public class FPSController : MonoBehaviour
         _mainCamara = Camera.main.transform;
     }
 
+    void Start()
+    {
+        _jumpTimeOutDelta = jumpTimeOut;
+        _fallTimeOutDelta = fallTimeOut;
+    }
 
     void Update()
     {
@@ -57,7 +62,11 @@ public class FPSController : MonoBehaviour
     bool isSprinting = false;
     float _sprintSpeed;
     float targetAngle;
-     void Movement()
+    float jumpTimeOut = 0.5f;
+    float fallTimeOut = 0.15f;
+    float _jumpTimeOutDelta;
+    float _fallTimeOutDelta;
+    void Movement()
     {
         Vector3 direction = new Vector3(_moveInput.x, 0, _moveInput.y);
 
@@ -70,7 +79,7 @@ public class FPSController : MonoBehaviour
 
         //_animator.SetFloat("horizontal", _moveInput.x);
         //_animator.SetFloat("vertical", _moveInput.y);
-        float targetSpeed;
+        /*float targetSpeed;
         if(isSprinting)
         {
             targetSpeed = _sprintSpeed;
@@ -78,7 +87,8 @@ public class FPSController : MonoBehaviour
         else
         {
             targetSpeed = _movementSpeed;
-        }
+        }*/
+        float targetSpeed = _movementSpeed;
 
         if(direction == Vector3.zero)
         {
@@ -88,7 +98,7 @@ public class FPSController : MonoBehaviour
         float speedOffset = 0.1f;
         if(currentSpeed < targetSpeed - speedOffset || currentSpeed > targetSpeed + speedOffset)
         {
-            _speed = Mathf.Lerp(currentSpeed, targetSpeed, Time.deltaTime * _speedChangeRate);
+            _speed = Mathf.Lerp(currentSpeed, targetSpeed * direction.magnitude, Time.deltaTime * _speedChangeRate);
             _speed = Mathf.Round(_speed * 1000f) / 1000f;
         }
         else
@@ -128,27 +138,46 @@ public class FPSController : MonoBehaviour
             _animator.SetBool("IsJumping", false);
         }*/
         //_controller.Move(_playerGravity * Time.deltaTime);
+        
         _animator.SetBool("Land", IsGrounded());
         if(IsGrounded())
         {
+            _fallTimeOutDelta = fallTimeOut;
+
             _animator.SetBool("Jump", false);
             _animator.SetBool("Fall", false);
             if(_playerGravity.y < 0)
             {
                 _playerGravity.y = -2;
             }
+            if(_jumpTimeOutDelta >= 0)
+            {
+                _jumpTimeOutDelta -= Time.deltaTime;
+            }
         }
         else
             {
-                _animator.SetBool("Fall", true);
+                _jumpTimeOutDelta = jumpTimeOut;
+                if(_fallTimeOutDelta >= 0)
+                {
+                    _fallTimeOutDelta -= Time.deltaTime;
+                }
+                else
+                {
+                    _animator.SetBool("Fall", true);
+                }
                 _playerGravity.y += _gravity * Time.deltaTime;
             }
     }
 
     void Jump()
     {
-        _animator.SetBool("Jump", true);
-        _playerGravity.y = Mathf.Sqrt(_jumpHeigth * -2 * _gravity);
+        if(_jumpTimeOutDelta <= 0)
+        {
+            _animator.SetBool("Jump", true);
+            _playerGravity.y = Mathf.Sqrt(_jumpHeigth * -2 * _gravity);
+        }
+
         //_controller.Move(_playerGravity * Time.deltaTime);
     }
 
